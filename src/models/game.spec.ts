@@ -7,16 +7,6 @@ describe("Board", () => {
     expect(board.cells.length).toBe(16);
   });
 
-  test("should generate a new cell", () => {
-    const board = new Board();
-    const [index, value] = board.generateNewCell();
-    expect(index).toBeGreaterThanOrEqual(0);
-    expect(index).toBeLessThanOrEqual(15);
-    expect(value).toBeGreaterThanOrEqual(2);
-    expect(value).toBeLessThanOrEqual(16);
-    expect(board.cells[index]).toBe(value);
-  });
-
   test("get and set column", () => {
     const board = new Board();
     board.setColumn(0, [1, 2, 3, 4]);
@@ -34,6 +24,7 @@ describe("merge", () => {
   test("should merge cells", () => {
     const cells = [2, 2, 4, 4];
     expect(merge(cells)).toEqual([4, 8, 0, 0]);
+    expect(merge([2, 4, 4, 2])).toEqual([2, 8, 2, 0]);
   });
 });
 
@@ -41,6 +32,16 @@ describe("Game", () => {
   test("should have a board", () => {
     const game = new Game();
     expect(game.board).toBeDefined();
+  });
+
+  test("should generate a new cell", () => {
+    const game = new Game();
+    const [index, value] = game.generateNewCell();
+    expect(index).toBeGreaterThanOrEqual(0);
+    expect(index).toBeLessThanOrEqual(15);
+    expect(value).toBeGreaterThanOrEqual(2);
+    expect(value).toBeLessThanOrEqual(16);
+    expect(game.board.cells[index]).toBe(value);
   });
 
   test("should have a score", () => {

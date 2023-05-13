@@ -8,10 +8,10 @@ const candidates = [
 export class Game {
   private _board: Board;
   private readonly handlers = {
-    left: () => this.moveLeft(),
-    right: () => this.moveRight(),
-    up: () => this.moveUp(),
-    down: () => this.moveDown(),
+    left: () => this.canMoveLeft() && this.moveLeft(),
+    right: () => this.canMoveRight() && this.moveRight(),
+    up: () => this.canMoveUp() && this.moveUp(),
+    down: () => this.canMoveDown() && this.moveDown(),
   };
 
   constructor() {
@@ -26,16 +26,55 @@ export class Game {
     return this._board.cells.reduce((acc, cur) => acc + cur, 0);
   }
 
+  get max() {
+    return Math.max(...this._board.cells);
+  }
+
   get win() {
-    return Math.max(...this._board.cells) >= 2048;
+    return this.max >= 2048;
   }
 
   get canMove() {
-    if (this._board.cells.some((cell) => cell === 0)) return true;
+    return (
+      this.canMoveLeft() ||
+      this.canMoveRight() ||
+      this.canMoveUp() ||
+      this.canMoveDown()
+    );
+  }
+
+  get canGenerateNewCell() {
+    return this._board.cells.some((cell) => cell === 0);
+  }
+
+  private canMoveLeft() {
     for (let i = 0; i < 4; i++) {
       const row = this._board.getRow(i);
+      if (canMerge(row)) return true;
+    }
+    return false;
+  }
+
+  private canMoveRight() {
+    for (let i = 0; i < 4; i++) {
+      const row = this._board.getRow(i);
+      if (canMerge(row.reverse())) return true;
+    }
+    return false;
+  }
+
+  private canMoveUp() {
+    for (let i = 0; i < 4; i++) {
       const column = this._board.getColumn(i);
-      if (canMerge(row) || canMerge(column)) return true;
+      if (canMerge(column)) return true;
+    }
+    return false;
+  }
+
+  private canMoveDown() {
+    for (let i = 0; i < 4; i++) {
+      const column = this._board.getColumn(i);
+      if (canMerge(column.reverse())) return true;
     }
     return false;
   }
@@ -47,6 +86,7 @@ export class Game {
       this._board.setRow(i, newRow);
       //   console.log("row:", i, row, newRow);
     }
+    return true;
   }
 
   private moveRight() {
@@ -56,6 +96,7 @@ export class Game {
       this._board.setRow(i, newRow);
       //   console.log("row:", i, row, newRow);
     }
+    return true;
   }
 
   private moveUp() {
@@ -65,6 +106,7 @@ export class Game {
       this._board.setColumn(i, newColumn);
       //   console.log("column:", i, column, newColumn);
     }
+    return true;
   }
 
   private moveDown() {
@@ -74,11 +116,28 @@ export class Game {
       this._board.setColumn(i, newColumn);
       //   console.log("column:", i, column, newColumn);
     }
+    return true;
   }
 
   public move(direction: "left" | "right" | "up" | "down") {
-    this.handlers[direction]();
-    return true;
+    return this.handlers[direction]();
+  }
+
+  public restart() {
+    this._board = new Board();
+  }
+
+  public generateNewCell() {
+    const zeroIndexes = this.board.cells
+      .map((cell, index) => [cell === 0, index])
+      .filter(([isZero]) => isZero)
+      .map(([, index]) => index);
+    const randomIndex = Math.floor(Math.random() * zeroIndexes.length);
+    const index = zeroIndexes[randomIndex] as number;
+    const value = candidates[Math.floor(Math.random() * candidates.length)];
+    this.board.cells[index] = value * Math.max(Math.floor(this.max) / 64, 1);
+    console.log("generate new cell", index, value);
+    return [index, value];
   }
 }
 
@@ -113,19 +172,6 @@ export class Board {
 
   get cells() {
     return this._cells;
-  }
-
-  public generateNewCell() {
-    const zeroIndexes = this._cells
-      .map((cell, index) => [cell === 0, index])
-      .filter(([isZero]) => isZero)
-      .map(([, index]) => index);
-    const randomIndex = Math.floor(Math.random() * zeroIndexes.length);
-    const index = zeroIndexes[randomIndex] as number;
-    const value = candidates[Math.floor(Math.random() * candidates.length)];
-    this._cells[index] = value;
-    console.log("generate new cell", index, value);
-    return [index, value];
   }
 
   public setColumn(index: number, column: number[]) {
